@@ -1,22 +1,25 @@
 package vn.fullStep.controller.request;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-
+import lombok.ToString;
+import vn.fullStep.common.Gender;
+import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
-@Setter
 @Getter
-@Data
-public class UserUpdateRequest implements java.io.Serializable {
+@Setter
+@ToString
+public class UserUpdateRequest implements Serializable {
     private Long id;
     private String firstName;
     private String lastName;
-    private String gender;
+    private Gender gender;
     private Date birthday;
     private String username;
     private String email;
     private String phone;
-    private String password;
+    private List<AddressRequest> addresses;
 }
+

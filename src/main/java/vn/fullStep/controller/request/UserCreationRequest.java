@@ -1,21 +1,25 @@
 package vn.fullStep.controller.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import vn.fullStep.common.Gender;
+import vn.fullStep.common.UserType;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserRequest implements Serializable {
+//@ToString
+public class UserCreationRequest implements Serializable {
     private String firstName;
     private String lastName;
-    private String gender;
+    private Gender gender;
     private Date birthday;
     private String username;
     private String email;
     private String phone;
-    private String password;
+    private UserType type;
+    private List<AddressRequest> addresses; // home,office
 }
