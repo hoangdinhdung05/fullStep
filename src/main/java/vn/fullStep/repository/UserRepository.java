@@ -13,10 +13,6 @@ import java.util.List;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    UserResponse findByUsername(String username);
-
-    UserResponse findByEmail(String email);
-
     @Query("SELECT u FROM User u " +
             "WHERE u.status = 'ACTIVE' " +
             "AND (" +
@@ -27,5 +23,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "LOWER(u.phone) LIKE :keyword" +
             ")")
     Page<User> searchByKeyword(String keyword, Pageable pageable);
+
+    User findByEmail(String email);
+
+    User findByUsername(String username);
 
 }

@@ -28,7 +28,6 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
-
 openapi:
   service:
     api-docs: backend-service
@@ -37,4 +36,4 @@ openapi:
     version: 1.0.0
 
 jwt:
-  secretKey: dev@123
+  secretKey: abc@123

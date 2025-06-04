@@ -18,6 +18,7 @@ import vn.fullStep.controller.response.UserPageResponse;
 import vn.fullStep.controller.response.UserResponse;
 import vn.fullStep.entity.Address;
 import vn.fullStep.entity.User;
+import vn.fullStep.exception.InvalidDataException;
 import vn.fullStep.exception.ResourceNotFoundException;
 import vn.fullStep.repository.AddressRepository;
 import vn.fullStep.repository.UserRepository;
@@ -111,11 +112,19 @@ public class UserServiceImpl implements UserService {
     public long save(UserCreationRequest request) {
 
         log.info("Saving user with username: {}", request.getUsername());
+
+        User userByEmail = this.userRepository.findByEmail(request.getEmail());
+        if(userByEmail != null) {
+            log.error("User with email {} already exists", request.getEmail());
+            throw new InvalidDataException("User with email " + request.getEmail() + " already exists");
+        }
+
         User user = new User();
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setGender(request.getGender());
         user.setBirthday(request.getBirthday());
+
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setUsername(request.getUsername());
