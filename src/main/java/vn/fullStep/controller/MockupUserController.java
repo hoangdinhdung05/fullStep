@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import vn.fullStep.common.Gender;
 import vn.fullStep.controller.request.UserCreationRequest;
 import vn.fullStep.controller.request.UserPasswordRequest;
 import vn.fullStep.controller.request.UserUpdateRequest;
@@ -30,7 +31,7 @@ public class MockupUserController {
         userResponse1.setUsername("admin");
         userResponse1.setEmail("admin@gmail.com");
         userResponse1.setPhone("0123456789");
-        userResponse1.setGender("Nam");
+        userResponse1.setGender(Gender.MALE);
         userResponse1.setBirthday(new java.util.Date(222, 1, 1));
 
         UserResponse userResponse2 = new UserResponse();
@@ -40,7 +41,7 @@ public class MockupUserController {
         userResponse2.setUsername("test");
         userResponse2.setEmail("test@gmail.com");
         userResponse2.setPhone("1111");
-        userResponse2.setGender("Nam");
+        userResponse2.setGender(Gender.MALE);
         userResponse2.setBirthday(new java.util.Date(22, 1, 1));
 
         List<UserResponse> userList = List.of(userResponse1, userResponse2);
@@ -63,7 +64,7 @@ public class MockupUserController {
         userDetail.setUsername("admin");
         userDetail.setEmail("admin@gmail.com");
         userDetail.setPhone("0123456789");
-        userDetail.setGender("Nam");
+        userDetail.setGender(Gender.MALE);
         userDetail.setBirthday(new java.util.Date(222, 1, 1));
 
         Map<String, Object> result = new LinkedHashMap<>();

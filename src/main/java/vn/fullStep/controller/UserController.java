@@ -7,10 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.fullStep.common.Gender;
 import vn.fullStep.controller.request.UserCreationRequest;
 import vn.fullStep.controller.request.UserPasswordRequest;
 import vn.fullStep.controller.request.UserUpdateRequest;
+import vn.fullStep.controller.response.UserPageResponse;
 import vn.fullStep.controller.response.UserResponse;
+import vn.fullStep.entity.User;
 import vn.fullStep.service.UserService;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,30 +31,14 @@ public class UserController {
     @Operation(summary = "Test API", description = "This is a test API to get list users")
     @GetMapping("/list")
     public Map<String, Object> getList(@RequestParam(required = false) String keyWord,
+                                        @RequestParam(required = false) String sort,
                                         @RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "20") int size) {
+        log.info("Fetching user list with keyword: {}, sort: {}, page: {}, size: {}", keyWord, sort, page, size);
 
-        UserResponse userResponse1 = new UserResponse();
-        userResponse1.setId(1L);
-        userResponse1.setFirstName("Hoang");
-        userResponse1.setLastName("Dung");
-        userResponse1.setUsername("admin");
-        userResponse1.setEmail("admin@gmail.com");
-        userResponse1.setPhone("0123456789");
-        userResponse1.setGender("Nam");
-        userResponse1.setBirthday(new java.util.Date(222, 1, 1));
+//        this.userService.findAll(keyWord, sort, page, size);
 
-        UserResponse userResponse2 = new UserResponse();
-        userResponse2.setId(2L);
-        userResponse2.setFirstName("Test");
-        userResponse2.setLastName("HD");
-        userResponse2.setUsername("test");
-        userResponse2.setEmail("test@gmail.com");
-        userResponse2.setPhone("1111");
-        userResponse2.setGender("Nam");
-        userResponse2.setBirthday(new java.util.Date(22, 1, 1));
-
-        List<UserResponse> userList = List.of(userResponse1, userResponse2);
+        UserPageResponse userList = this.userService.findAll(keyWord, sort, page, size);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", HttpStatus.OK.value());
@@ -64,20 +51,25 @@ public class UserController {
     @Operation(summary = "Get User Detail By ID API", description = "API to get user detail by ID")
     @GetMapping("/{userId}")
     public Map<String, Object> getUserById(@PathVariable Long userId) {
-        UserResponse userDetail = new UserResponse();
-        userDetail.setId(userId);
-        userDetail.setFirstName("Hoang");
-        userDetail.setLastName("Dung");
-        userDetail.setUsername("admin");
-        userDetail.setEmail("admin@gmail.com");
-        userDetail.setPhone("0123456789");
-        userDetail.setGender("Nam");
-        userDetail.setBirthday(new java.util.Date(222, 1, 1));
+
+        log.info("Fetching user details for user ID: {}", userId);
+
+        UserResponse user = this.userService.findById(userId);
+
+//        UserResponse userDetail = new UserResponse();
+//        userDetail.setId(userId);
+//        userDetail.setFirstName("Hoang");
+//        userDetail.setLastName("Dung");
+//        userDetail.setUsername("admin");
+//        userDetail.setEmail("admin@gmail.com");
+//        userDetail.setPhone("0123456789");
+//        userDetail.setGender("Nam");
+//        userDetail.setBirthday(new java.util.Date(222, 1, 1));
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", HttpStatus.OK.value());
         result.put("message", "Get User Detail Success");
-        result.put("data", userDetail);
+        result.put("data", user);
 
         return result;
     }
@@ -86,6 +78,7 @@ public class UserController {
     @PostMapping("/create")
     public ResponseEntity<Object> createUser(@RequestBody UserCreationRequest request) {
         log.info("Creating user with request: {}", request);
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", HttpStatus.CREATED.value());
         result.put("message", "Create User Success");
