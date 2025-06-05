@@ -5,24 +5,24 @@ import vn.fullStep.controller.request.UserPasswordRequest;
 import vn.fullStep.controller.request.UserUpdateRequest;
 import vn.fullStep.controller.response.UserPageResponse;
 import vn.fullStep.controller.response.UserResponse;
-import java.util.List;
+
 
 public interface UserService {
 
-    UserPageResponse findAll(String keyWord, String sort, int page, int size);
+    UserPageResponse findAll(String keyword, String sort, int page, int size);
 
-    UserResponse findById(Long userId);
+    UserResponse findById(Long id);
 
     UserResponse findByUsername(String username);
 
     UserResponse findByEmail(String email);
 
-    long save(UserCreationRequest request);
+    long save(UserCreationRequest req);
 
-    void update(UserUpdateRequest request);
+    void update(UserUpdateRequest req);
 
-    void delete(Long userId);
+    void changePassword(UserPasswordRequest req);
 
-    void changePassword(UserPasswordRequest request);
-
+    void delete(Long id);
 }
+

@@ -5,15 +5,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import vn.fullStep.controller.response.UserResponse;
-import vn.fullStep.entity.User;
-
-import java.util.List;
+import vn.fullStep.entity.UserEntity;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
-    @Query("SELECT u FROM User u " +
+    @Query("SELECT u FROM UserEntity u " +
             "WHERE u.status = 'ACTIVE' " +
             "AND (" +
             "LOWER(u.firstName) LIKE :keyword OR " +
@@ -22,10 +19,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "LOWER(u.email) LIKE :keyword OR " +
             "LOWER(u.phone) LIKE :keyword" +
             ")")
-    Page<User> searchByKeyword(String keyword, Pageable pageable);
+    Page<UserEntity> searchByKeyword(String keyword, Pageable pageable);
 
-    User findByEmail(String email);
+    UserEntity findByEmail(String email);
 
-    User findByUsername(String username);
+    UserEntity findByUsername(String username);
 
 }

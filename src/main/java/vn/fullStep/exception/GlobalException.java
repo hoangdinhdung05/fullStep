@@ -20,10 +20,16 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RestControllerAdvice
 public class GlobalException {
 
+    /**
+     * Handle exception when validate data
+     *
+     * @param e
+     * @param request
+     * @return errorResponse
+     */
     @ExceptionHandler({ConstraintViolationException.class,
             MissingServletRequestParameterException.class, MethodArgumentNotValidException.class})
     @ResponseStatus(BAD_REQUEST)
-    /*
     @ApiResponses(value = {
             @ApiResponse(responseCode = "400", description = "Bad Request",
                     content = {@Content(mediaType = APPLICATION_JSON_VALUE,
@@ -41,7 +47,6 @@ public class GlobalException {
                                             """
                             ))})
     })
-    */
     public ErrorResponse handleValidationException(Exception e, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setTimestamp(new Date());
@@ -69,9 +74,15 @@ public class GlobalException {
         return errorResponse;
     }
 
+    /**
+     * Handle exception when the request not found data
+     *
+     * @param e
+     * @param request
+     * @return
+     */
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(NOT_FOUND)
-    /*
     @ApiResponses(value = {
             @ApiResponse(responseCode = "404", description = "Bad Request",
                     content = {@Content(mediaType = APPLICATION_JSON_VALUE,
@@ -89,7 +100,6 @@ public class GlobalException {
                                             """
                             ))})
     })
-    */
     public ErrorResponse handleResourceNotFoundException(ResourceNotFoundException e, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setTimestamp(new Date());
@@ -101,9 +111,15 @@ public class GlobalException {
         return errorResponse;
     }
 
+    /**
+     * Handle exception when the data is conflicted
+     *
+     * @param e
+     * @param request
+     * @return
+     */
     @ExceptionHandler(InvalidDataException.class)
     @ResponseStatus(CONFLICT)
-    /*
     @ApiResponses(value = {
             @ApiResponse(responseCode = "409", description = "Conflict",
                     content = {@Content(mediaType = APPLICATION_JSON_VALUE,
@@ -121,7 +137,6 @@ public class GlobalException {
                                             """
                             ))})
     })
-    */
     public ErrorResponse handleDuplicateKeyException(InvalidDataException e, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setTimestamp(new Date());
@@ -133,9 +148,15 @@ public class GlobalException {
         return errorResponse;
     }
 
+    /**
+     * Handle exception when internal server error
+     *
+     * @param e
+     * @param request
+     * @return error
+     */
     @ExceptionHandler(Exception.class)
     @ResponseStatus(INTERNAL_SERVER_ERROR)
-    /*
     @ApiResponses(value = {
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
                     content = {@Content(mediaType = APPLICATION_JSON_VALUE,
@@ -153,7 +174,6 @@ public class GlobalException {
                                             """
                             ))})
     })
-    */
     public ErrorResponse handleException(Exception e, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setTimestamp(new Date());

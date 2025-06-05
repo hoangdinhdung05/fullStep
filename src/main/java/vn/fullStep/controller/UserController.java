@@ -2,6 +2,7 @@ package vn.fullStep.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -16,114 +17,121 @@ import vn.fullStep.controller.request.UserUpdateRequest;
 import vn.fullStep.controller.response.UserPageResponse;
 import vn.fullStep.controller.response.UserResponse;
 import vn.fullStep.service.UserService;
+
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
 @Tag(name = "User Controller")
+@Slf4j(topic = "USER-CONTROLLER")
 @RequiredArgsConstructor
-@Slf4j(topic = "USER_CONTROLLER")
 @Validated
 public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary = "Test API", description = "This is a test API to get list users")
+    @Operation(summary = "Get user list", description = "API retrieve user from database")
     @GetMapping("/list")
-    public Map<String, Object> getList(@RequestParam(required = false) String keyWord,
-                                        @RequestParam(required = false) String sort,
-                                        @RequestParam(defaultValue = "0") int page,
-                                        @RequestParam(defaultValue = "20") int size) {
-        log.info("Fetching user list with keyword: {}, sort: {}, page: {}, size: {}", keyWord, sort, page, size);
-
-//        this.userService.findAll(keyWord, sort, page, size);
-
-        UserPageResponse userList = this.userService.findAll(keyWord, sort, page, size);
+    public Map<String, Object> getList(@RequestParam(required = false) String keyword,
+                                       @RequestParam(required = false) String sort,
+                                       @RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(defaultValue = "20") int size) {
+        log.info("Get user list");
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", HttpStatus.OK.value());
-        result.put("message", "Success");
-        result.put("data", userList);
+        result.put("message", "user list");
+        result.put("data", userService.findAll(keyword, sort, page, size));
 
         return result;
     }
 
-    @Operation(summary = "Get User Detail By ID API", description = "API to get user detail by ID")
+    @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
     @GetMapping("/{userId}")
-    public Map<String, Object> getUserById(@PathVariable @Min(value = 1, message = "UserId must be equal or greater than 1") Long userId) {
+    public Map<String, Object> getUserDetail(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
+        log.info("Get user detail by ID: {}", userId);
 
-        log.info("Fetching user details for user ID: {}", userId);
-
-        UserResponse user = this.userService.findById(userId);
+        UserResponse userDetail = userService.findById(userId);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", HttpStatus.OK.value());
-        result.put("message", "Get User Detail Success");
-        result.put("data", user);
+        result.put("message", "user");
+        result.put("data", userDetail);
 
         return result;
     }
 
-    @Operation(summary = "Create User API", description = "API to create user by ID")
-    @PostMapping("/create")
+    @Operation(summary = "Create User", description = "API add new user to database")
+    @PostMapping("/add")
     public ResponseEntity<Object> createUser(@RequestBody @Valid UserCreationRequest request) {
-        log.info("Creating user with request: {}", request);
+        log.info("Create User: {}", request);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", HttpStatus.CREATED.value());
-        result.put("message", "Create User Success");
-        result.put("data", this.userService.save(request));
+        result.put("message", "User created successfully");
+        result.put("data", userService.save(request));
 
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Delete User API", description = "API to delete user by ID")
-    @DeleteMapping("/{userId}")
-    public Map<String, Object> deleteUserById(@PathVariable @Min(value = 1, message = "UserId must be equal or greater than 1") Long userId) {
+    @Operation(summary = "Update User", description = "API update user to database")
+    @PutMapping("/upd")
+    public Map<String, Object> updateUser(@RequestBody @Valid UserUpdateRequest request) {
+        log.info("Updating user: {}", request);
 
-        log.info("Deleting user with ID: {}", userId);
-        //Only change to isActive state but not delete from db
-        this.userService.delete(userId);
-
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("status", HttpStatus.RESET_CONTENT.value());
-        result.put("message", "Delete User Success");
-        result.put("data", null);
-
-        return result;
-    }
-
-    @Operation(summary = "Update User API", description = "API to update user by ID")
-    @PutMapping("/update")
-    public Map<String, Object> updateUserById(@RequestBody @Valid UserUpdateRequest request) {
-
-        log.info("Updating user with request: {}", request);
-        this.userService.update(request);
+        userService.update(request);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", HttpStatus.ACCEPTED.value());
-        result.put("message", "Update User Success");
-        result.put("data", "User updated successfully");
+        result.put("message", "User updated successfully");
+        result.put("data", "");
 
         return result;
     }
 
-    @Operation(summary = "Update Password User API", description = "API to update password user by ID")
-    @PatchMapping("/update-password")
-    public Map<String, Object> updatePasswordUserById(@RequestBody @Valid UserPasswordRequest request) {
+    @Operation(summary = "Change Password", description = "API change password for user to database")
+    @PatchMapping("/change-pwd")
+    public Map<String, Object> changePassword(@RequestBody @Valid UserPasswordRequest request) {
+        log.info("Changing password for user: {}", request);
 
-        log.info("Updating password for user with request: {}", request);
-
-        this.userService.changePassword(request);
+        userService.changePassword(request);
 
         Map<String, Object> result = new LinkedHashMap<>();
-        // Here you would typically call a service to update the user's password
         result.put("status", HttpStatus.NO_CONTENT.value());
-        result.put("message", "Update Password User Success");
-        result.put("data", "Password updated successfully");
+        result.put("message", "Password updated successfully");
+        result.put("data", "");
 
         return result;
     }
 
+    @Operation(summary = "Confirm Email", description = "Confirm email for account")
+    @GetMapping("/confirm-email")
+    public void confirmEmail(@RequestParam String secretCode, HttpServletResponse response) throws IOException {
+        log.info("Confirm email for account with secretCode: {}", secretCode);
+
+        try {
+            // TODO check or compare secret code from db
+        } catch (Exception e) {
+            log.error("Verification fail", e.getMessage(), e);
+        } finally {
+            response.sendRedirect("https://tayjava.vn/wp-admin/");
+        }
+    }
+
+    @Operation(summary = "Delete user", description = "API activate user from database")
+    @DeleteMapping("/del/{userId}")
+    public Map<String, Object> deleteUser(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
+        log.info("Deleting user: {}", userId);
+
+        userService.delete(userId);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", HttpStatus.RESET_CONTENT.value());
+        result.put("message", "User deleted successfully");
+        result.put("data", "");
+
+        return result;
+    }
 }

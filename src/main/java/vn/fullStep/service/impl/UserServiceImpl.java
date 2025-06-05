@@ -16,39 +16,43 @@ import vn.fullStep.controller.request.UserPasswordRequest;
 import vn.fullStep.controller.request.UserUpdateRequest;
 import vn.fullStep.controller.response.UserPageResponse;
 import vn.fullStep.controller.response.UserResponse;
-import vn.fullStep.entity.Address;
-import vn.fullStep.entity.User;
+import vn.fullStep.entity.AddressEntity;
+import vn.fullStep.entity.UserEntity;
 import vn.fullStep.exception.InvalidDataException;
 import vn.fullStep.exception.ResourceNotFoundException;
 import vn.fullStep.repository.AddressRepository;
 import vn.fullStep.repository.UserRepository;
+import vn.fullStep.service.EmailService;
 import vn.fullStep.service.UserService;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-@Slf4j(topic = "USER_SERVICE")
+@Slf4j(topic = "USER-SERVICE")
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Override
-    public UserPageResponse findAll(String keyWord, String sort, int page, int size) {
+    public UserPageResponse findAll(String keyword, String sort, int page, int size) {
+        log.info("findAll start");
 
-        //Sorting
+        // Sorting
         Sort.Order order = new Sort.Order(Sort.Direction.ASC, "id");
-        if(StringUtils.hasLength(sort)) {
-            //call search method in repository
-            Pattern pattern = Pattern.compile("(\\w+)(:)(.*)");
+        if (StringUtils.hasLength(sort)) {
+            Pattern pattern = Pattern.compile("(\\w+?)(:)(.*)"); // tencot:asc|desc
             Matcher matcher = pattern.matcher(sort);
-            if(matcher.find()) {
+            if (matcher.find()) {
                 String columnName = matcher.group(1);
-                if(matcher.group(3).equalsIgnoreCase("asc")) {
+                if (matcher.group(3).equalsIgnoreCase("asc")) {
                     order = new Sort.Order(Sort.Direction.ASC, columnName);
                 } else {
                     order = new Sort.Order(Sort.Direction.DESC, columnName);
@@ -56,44 +60,42 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        //Page number starts from 0, so if page is 1, we need to convert it to 0
+        // Xu ly truong hop FE muon bat dau voi page = 1
         int pageNo = 0;
-        if(page > 0) {
-            pageNo = page - 1; //convert to zero-based index
+        if (page > 0) {
+            pageNo = page - 1;
         }
 
-        //Pageable object
+        // Paging
         Pageable pageable = PageRequest.of(pageNo, size, Sort.by(order));
 
-        Page<User> entityPage;
+        Page<UserEntity> entityPage;
 
-        if(StringUtils.hasLength(keyWord)) {
-            keyWord = "%" + keyWord.toLowerCase() + "%";
-            entityPage = this.userRepository.searchByKeyword(keyWord, pageable);
+        if (StringUtils.hasLength(keyword)) {
+            keyword = "%" + keyword.toLowerCase() + "%";
+            entityPage = userRepository.searchByKeyword(keyword, pageable);
         } else {
-            entityPage = this.userRepository.findAll(pageable);
+            entityPage = userRepository.findAll(pageable);
         }
 
-        //return page no, page size, total elements, total pages
-        //list of UserResponse
         return getUserPageResponse(page, size, entityPage);
     }
 
     @Override
-    public UserResponse findById(Long userId) {
-        log.info("Finding user by ID: {}", userId);
+    public UserResponse findById(Long id) {
+        log.info("Find user by id: {}", id);
 
-        User user = getUserById(userId);
+        UserEntity userEntity = getUserEntity(id);
 
         return UserResponse.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .gender(user.getGender())
-                .birthday(user.getBirthday())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .phone(user.getPhone())
+                .id(id)
+                .firstName(userEntity.getFirstName())
+                .lastName(userEntity.getLastName())
+                .gender(userEntity.getGender())
+                .birthday(userEntity.getBirthday())
+                .username(userEntity.getUsername())
+                .phone(userEntity.getPhone())
+                .email(userEntity.getEmail())
                 .build();
     }
 
@@ -109,34 +111,33 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public long save(UserCreationRequest request) {
+    public long save(UserCreationRequest req) {
+        log.info("Saving user: {}", req);
 
-        log.info("Saving user with username: {}", request.getUsername());
-
-        User userByEmail = this.userRepository.findByEmail(request.getEmail());
-        if(userByEmail != null) {
-            log.error("User with email {} already exists", request.getEmail());
-            throw new InvalidDataException("User with email " + request.getEmail() + " already exists");
+        UserEntity userByEmail = userRepository.findByEmail(req.getEmail());
+        if (userByEmail != null) {
+            throw new InvalidDataException("Email already exists");
         }
 
-        User user = new User();
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setGender(request.getGender());
-        user.setBirthday(request.getBirthday());
-
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
-        user.setUsername(request.getUsername());
-        user.setType(request.getType());
+        UserEntity user = new UserEntity();
+        user.setFirstName(req.getFirstName());
+        user.setLastName(req.getLastName());
+        user.setGender(req.getGender());
+        user.setBirthday(req.getBirthday());
+        user.setEmail(req.getEmail());
+        user.setPhone(req.getPhone());
+        user.setUsername(req.getUsername());
+        user.setType(req.getType());
         user.setStatus(UserStatus.NONE);
-        this.userRepository.save(user);
 
-        if(user.getId() != null) {
-            log.info("User saved with ID: {}", user.getId());
-            List<Address> addresses = new ArrayList<>();
-            request.getAddresses().forEach(address -> {
-                Address addressEntity = new Address();
+        userRepository.save(user);
+        log.info("Saved user: {}", user);
+
+        if (user.getId() != null) {
+            log.info("user id: {}", user.getId());
+            List<AddressEntity> addresses = new ArrayList<>();
+            req.getAddresses().forEach(address -> {
+                AddressEntity addressEntity = new AddressEntity();
                 addressEntity.setApartmentNumber(address.getApartmentNumber());
                 addressEntity.setFloor(address.getFloor());
                 addressEntity.setBuilding(address.getBuilding());
@@ -148,43 +149,46 @@ public class UserServiceImpl implements UserService {
                 addressEntity.setUserId(user.getId());
                 addresses.add(addressEntity);
             });
-            this.addressRepository.saveAll(addresses);
-            log.info("Saved {} addresses for user with ID: {}", addresses.size(), user.getId());
+            addressRepository.saveAll(addresses);
+            log.info("Saved addresses: {}", addresses);
         }
 
-        return user.getId() != null ? user.getId() : -1L;
+        // Send email verification
+        try {
+            emailService.sendVerificationEmail(req.getEmail(), req.getUsername());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return user.getId();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(UserUpdateRequest request) {
-        log.info("Updating user with ID: {}", request.getId());
-        //get user by ID
-        User user = getUserById(request.getId());
+    public void update(UserUpdateRequest req) {
+        log.info("Updating user: {}", req);
 
-        //set data to user
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setGender(request.getGender());
-        user.setBirthday(request.getBirthday());
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
-        user.setUsername(request.getUsername());
-        this.userRepository.save(user);
+        // Get user by id
+        UserEntity user = getUserEntity(req.getId());
+        user.setFirstName(req.getFirstName());
+        user.setLastName(req.getLastName());
+        user.setGender(req.getGender());
+        user.setBirthday(req.getBirthday());
+        user.setEmail(req.getEmail());
+        user.setPhone(req.getPhone());
+        user.setUsername(req.getUsername());
 
-        log.info("User with ID: {} updated successfully", user.getId());
+        userRepository.save(user);
+        log.info("Updated user: {}", user);
 
-        //save user addresses
-        List<Address> addresses = new ArrayList<>();
+        // save address
+        List<AddressEntity> addresses = new ArrayList<>();
 
-        request.getAddresses().forEach(address -> {
-            //check if address exists for user
-            Address addressEntity = this.addressRepository.findByUserIdAndAddressType(user.getId(), address.getAddressType());
-
-            if(addressEntity == null) {
-                addressEntity = new Address();
+        req.getAddresses().forEach(address -> {
+            AddressEntity addressEntity = addressRepository.findByUserIdAndAddressType(user.getId(), address.getAddressType());
+            if (addressEntity == null) {
+                addressEntity = new AddressEntity();
             }
-
             addressEntity.setApartmentNumber(address.getApartmentNumber());
             addressEntity.setFloor(address.getFloor());
             addressEntity.setBuilding(address.getBuilding());
@@ -198,83 +202,77 @@ public class UserServiceImpl implements UserService {
             addresses.add(addressEntity);
         });
 
-        //save user to database
-        this.addressRepository.saveAll(addresses);
-        log.info("Updated {} addresses for user with ID: {}", addresses.size(), user.getId());
+        // save addresses
+        addressRepository.saveAll(addresses);
+        log.info("Updated addresses: {}", addresses);
     }
 
     @Override
-    public void delete(Long userId) {
-        log.info("Deleting user with ID: {}", userId);
-        //get user by ID
-        User user = getUserById(userId);
-        //set user status to INACTIVE
-        user.setStatus(UserStatus.INACTIVE);
-        log.info("User with ID: {} deleted successfully", user.getId());
-        //save user to database
-        this.userRepository.save(user);
-        log.info("User with ID: {} status changed to INACTIVE", user.getId());
-    }
+    public void changePassword(UserPasswordRequest req) {
+        log.info("Changing password for user: {}", req);
 
-    @Override
-    public void changePassword(UserPasswordRequest request) {
-        log.info("Changing password for user with ID: {}", request);
-        //get user by ID
-        User user = getUserById(request.getId());
-
-        if(request.getPassword().equals(request.getConfirmPassword())) {
-            user.setPassword(this.passwordEncoder.encode(request.getPassword()));
+        // Get user by id
+        UserEntity user = getUserEntity(req.getId());
+        if (req.getPassword().equals(req.getConfirmPassword())) {
+            user.setPassword(passwordEncoder.encode(req.getPassword()));
         }
 
-        log.info("Password changed successfully for user with ID: {}", user.getId());
-        //save user to database
-        this.userRepository.save(user);
+        userRepository.save(user);
+        log.info("Changed password for user: {}", user);
+    }
 
+    @Override
+    public void delete(Long id) {
+        log.info("Deleting user: {}", id);
+
+        // Get user by id
+        UserEntity user = getUserEntity(id);
+        user.setStatus(UserStatus.INACTIVE);
+
+        userRepository.save(user);
+        log.info("Deleted user id: {}", id);
     }
 
     /**
-     * Helper method to get user by ID
+     * Get user by id
      *
-     * @param userId the ID of the user
-     * @return User object
+     * @param id
+     * @return
      */
-    private User getUserById(Long userId) {
-
-        return this.userRepository.findById(userId).orElseThrow(() -> {
-//            log.error("User with ID {} not found", userId);
-            return new ResourceNotFoundException("User not found");
-        });
+    private UserEntity getUserEntity(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     /**
-     * Helper method to get UserPageResponse from Page<User>
+     * Convert EserEntities to UserResponse
      *
-     * @param page the current page number
-     * @param size the size of the page
-     * @return UserPageResponse object
+     * @param page
+     * @param size
+     * @param userEntities
+     * @return
      */
-    private static UserPageResponse getUserPageResponse(int page, int size, Page<User> users) {
-        List<UserResponse> userList = users.stream()
-                .map(user -> {
-                    return UserResponse.builder()
-                            .id(user.getId())
-                            .firstName(user.getFirstName())
-                            .lastName(user.getLastName())
-                            .gender(user.getGender())
-                            .birthday(user.getBirthday())
-                            .username(user.getUsername())
-                            .email(user.getEmail())
-                            .phone(user.getPhone())
-                            .build();
-                })
-                .toList();
+    private static UserPageResponse getUserPageResponse(int page, int size, Page<UserEntity> userEntities) {
+        log.info("Convert User Entity Page");
+
+        List<UserResponse> userList = userEntities.stream().map(entity -> UserResponse.builder()
+                .id(entity.getId())
+                .firstName(entity.getFirstName())
+                .lastName(entity.getLastName())
+                .gender(entity.getGender())
+                .birthday(entity.getBirthday())
+                .username(entity.getUsername())
+                .phone(entity.getPhone())
+                .email(entity.getEmail())
+                .build()
+        ).toList();
 
         UserPageResponse response = new UserPageResponse();
         response.setPageNumber(page);
         response.setPageSize(size);
-        response.setTotalElements(users.getTotalElements());
-        response.setTotalPages(users.getTotalPages());
+        response.setTotalElements(userEntities.getTotalElements());
+        response.setTotalPages(userEntities.getTotalPages());
         response.setUsers(userList);
+
         return response;
     }
 }

@@ -2,10 +2,10 @@ package vn.fullStep.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import vn.fullStep.entity.Address;
+import vn.fullStep.entity.AddressEntity;
 
 @Repository
-public interface AddressRepository extends JpaRepository<Address, Long> {
+public interface AddressRepository extends JpaRepository<AddressEntity, Long> {
     // Additional query methods can be defined here if needed
-    Address findByUserIdAndAddressType(Long userId, Integer addressType);
+    AddressEntity findByUserIdAndAddressType(Long userId, Integer addressType);
 }
