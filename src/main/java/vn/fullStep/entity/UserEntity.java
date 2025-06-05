@@ -3,28 +3,22 @@ package vn.fullStep.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import vn.fullStep.common.Gender;
 import vn.fullStep.common.UserStatus;
 import vn.fullStep.common.UserType;
-
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "tbl_user")
-public class UserEntity implements UserDetails, Serializable {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@Slf4j(topic = "UserEntity")
+public class UserEntity extends AbstractEntity<Long> implements UserDetails, Serializable {
 
     @Column(name = "first_name", length = 255)
     private String firstName;
@@ -36,8 +30,8 @@ public class UserEntity implements UserDetails, Serializable {
     @Column(name = "gender")
     private Gender gender;
 
-    @Temporal(TemporalType.DATE)
     @Column(name = "date_of_birth")
+    @Temporal(TemporalType.DATE)
     private Date birthday;
 
     @Column(name = "email", length = 255)
@@ -60,21 +54,36 @@ public class UserEntity implements UserDetails, Serializable {
     @Column(name = "status", length = 255)
     private UserStatus status;
 
-    @CreationTimestamp
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "created_at", updatable = false)
-    private Date createdAt;
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<UserHasRole> roles = new HashSet<>();
 
-    @UpdateTimestamp
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "updated_at")
-    private Date updatedAt;
+    @OneToMany(mappedBy = "user")
+    private Set<GroupHasUser> groups = new HashSet<>();
 
-
+//    @Override
+//    public Collection<? extends GrantedAuthority> getAuthorities() {
+//
+//        // Get roles by user_id
+//        List<Role> roleList = roles.stream().map(UserHasRole::getRole).toList();
+//
+//        // Get role name
+//        List<String> roleNames = roleList.stream().map(Role::getName).toList();
+//        log.info("User roles: {}", roleNames);
+//
+//        return roleNames.stream().map(SimpleGrantedAuthority::new).toList();
+//    }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        for (UserHasRole userHasRole : roles) {
+            Role role = userHasRole.getRole();
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName())); // ✅ Thêm prefix
+        }
+
+        return authorities;
     }
+
 
     @Override
     public boolean isAccountNonExpired() {

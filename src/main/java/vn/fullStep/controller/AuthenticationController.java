@@ -8,11 +8,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import vn.fullStep.controller.request.RefreshTokenRequest;
 import vn.fullStep.controller.request.SignInRequest;
 import vn.fullStep.controller.response.TokenResponse;
 import vn.fullStep.service.AuthenticationService;
-import java.nio.file.AccessDeniedException;
 
+import java.nio.file.AccessDeniedException;
 
 @RestController
 @RequestMapping("/auth")
@@ -33,9 +34,8 @@ public class AuthenticationController {
 
     @Operation(summary = "Refresh token", description = "Get access token by refresh token")
     @PostMapping("/refresh-token")
-    public TokenResponse refreshToken(@RequestBody String refreshToken) {
+    public TokenResponse refreshToken(@RequestBody RefreshTokenRequest request) {
         log.info("Refresh token request");
-
-        return authenticationService.getRefreshToken(refreshToken);
+        return authenticationService.getRefreshToken(request.getRefreshToken());
     }
 }

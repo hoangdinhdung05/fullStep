@@ -16,15 +16,14 @@ import vn.fullStep.controller.request.UserPasswordRequest;
 import vn.fullStep.controller.request.UserUpdateRequest;
 import vn.fullStep.controller.response.UserPageResponse;
 import vn.fullStep.controller.response.UserResponse;
-import vn.fullStep.entity.AddressEntity;
-import vn.fullStep.entity.UserEntity;
 import vn.fullStep.exception.InvalidDataException;
 import vn.fullStep.exception.ResourceNotFoundException;
+import vn.fullStep.entity.AddressEntity;
+import vn.fullStep.entity.UserEntity;
 import vn.fullStep.repository.AddressRepository;
 import vn.fullStep.repository.UserRepository;
 import vn.fullStep.service.EmailService;
 import vn.fullStep.service.UserService;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

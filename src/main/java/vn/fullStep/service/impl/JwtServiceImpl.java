@@ -15,9 +15,11 @@ import org.springframework.stereotype.Service;
 import vn.fullStep.common.TokenType;
 import vn.fullStep.exception.InvalidDataException;
 import vn.fullStep.service.JwtService;
+
 import java.security.Key;
 import java.util.*;
 import java.util.function.Function;
+
 import static vn.fullStep.common.TokenType.ACCESS_TOKEN;
 import static vn.fullStep.common.TokenType.REFRESH_TOKEN;
 
@@ -38,25 +40,23 @@ public class JwtServiceImpl implements JwtService {
     private String refreshKey;
 
     @Override
-    public String generateAccessToken(long userId, String username, Collection<? extends GrantedAuthority> authorities) {
-        log.info("Generate access token for user {} with authorities {}", userId, authorities);
+    public String generateAccessToken(String username, List<String> authorities) {
+        log.info("Generate access token for user {} with authorities {}", username, authorities);
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
         claims.put("role", authorities);
 
-        return generateToken(claims, username);
+        return createAccessToken(claims, username);
     }
 
     @Override
-    public String generateRefreshToken(long userId, String username, Collection<? extends GrantedAuthority> authorities) {
+    public String generateRefreshToken(String username, List<String> authorities) {
         log.info("Generate refresh token");
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
         claims.put("role", authorities);
 
-        return generateRefreshToken(claims, username);
+        return createRefreshToken(claims, username);
     }
 
     @Override
@@ -64,8 +64,9 @@ public class JwtServiceImpl implements JwtService {
         return extractClaim(token, type, Claims::getSubject);
     }
 
-    private String generateToken(Map<String, Object> claims, String username) {
-        log.info("----------[ generateToken ]----------");
+    private String createAccessToken(Map<String, Object> claims, String username) {
+        log.info("Create access token for user {}", username);
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(username)
@@ -75,8 +76,9 @@ public class JwtServiceImpl implements JwtService {
                 .compact();
     }
 
-    private String generateRefreshToken(Map<String, Object> claims, String username) {
-        log.info("----------[ generateRefreshToken ]----------");
+    private String createRefreshToken(Map<String, Object> claims, String username) {
+        log.info("Create refresh token for user {}", username);
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(username)
@@ -87,7 +89,8 @@ public class JwtServiceImpl implements JwtService {
     }
 
     private Key getKey(TokenType type) {
-        log.info("----------[ getKey ]----------");
+        log.info("Create key for type {}", type);
+
         switch (type) {
             case ACCESS_TOKEN -> {
                 return Keys.hmacShaKeyFor(Decoders.BASE64.decode(accessKey));
@@ -100,13 +103,14 @@ public class JwtServiceImpl implements JwtService {
     }
 
     private <T> T extractClaim(String token, TokenType type, Function<Claims, T> claimResolver) {
-        log.info("----------[ extractClaim ]----------");
+        log.info("Extract claim for token {}...", token.substring(0, 15));
+
         final Claims claims = extraAllClaim(token, type);
         return claimResolver.apply(claims);
     }
 
     private Claims extraAllClaim(String token, TokenType type) {
-        log.info("----------[ extraAllClaim ]----------");
+        log.info("Extract all claims for token {}...", token.substring(0, 15));
         try {
             return Jwts.parserBuilder().setSigningKey(getKey(type)).build().parseClaimsJws(token).getBody();
         } catch (SignatureException | ExpiredJwtException e) { // Invalid signature or expired token
