@@ -24,7 +24,7 @@ spring:
     enabled: false
 
   sendgrid:
-    apiKey: ${SENDGRID_API_KEY}
+    apiKey: ${SENDGRID_API_KEY:DUMMY_SENDGRID_API_KEY}
     fromEmail: hoangdinhdung0205@gmail.com
     templateId: d-31cf50168d7f4b95ba9122585e73941d
     verificationLink: http://localhost:8080/user/confirm-email
@@ -44,5 +44,5 @@ openapi:
 jwt:
   expiryMinutes: 5
   expiryDay: 14
-  accessKey: ${JWT_ACCESS_KEY}
-  refreshKey: ${JWT_REFRESH_KEY}
+  accessKey: ${JWT_ACCESS_KEY:DEFAULT_KEY}
+  refreshKey: ${JWT_REFRESH_KEY:DEFAULT_KEY}
